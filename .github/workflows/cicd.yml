@@ -2,7 +2,7 @@ name: CICD
 
 on:
   push:
-    branches: 
+    branches:
       - main
 
 jobs:
@@ -31,19 +31,27 @@ jobs:
       - name: Trivy FS scan
         run: trivy fs --format table -o fs.html .
 
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq unzip
+
+      - name: Cache SonarScanner CLI
+        uses: actions/cache@v4
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+
       - name: SonarQube Scan
         uses: sonarsource/sonarqube-scan-action@master
+        with:
+          args: >
+            -Dsonar.projectKey=my_project_key
+            -Dsonar.sources=.
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
-      - name: Install jq
-        run: sudo apt-get update && sudo apt-get install -y jq
-
-      - name: SonarQube Quality Gate check
-        id: sonarqube-quality-gate-check
+      - name: SonarQube Quality Gate
         uses: sonarsource/sonarqube-quality-gate-action@master
-        timeout-minutes: 5
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
@@ -68,15 +76,3 @@ jobs:
 
       - name: Push Docker Image
         run: docker push balajithiruselvan/boardgame:latest
-
-
-
-
-
-      
-
-          
-        
-        
-
-   
